@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdio.h>
 
 #include "chunk.h"
@@ -19,6 +20,8 @@ void initVM() {
 void freeVM() {}
 
 void push(Value value) {
+    // Check for a stack overflow
+    assert(vm.stackTop != vm.stack + STACK_MAX);
     *vm.stackTop = value;
     ++vm.stackTop;
 }
@@ -72,7 +75,7 @@ static InterpretResult run() {
             break;
         }
         case OP_NEGATE:
-            push(-pop());
+            *(vm.stackTop - 1) = -*(vm.stackTop - 1);
             break;
         case OP_ADD:
             BINARY_OP(+);
