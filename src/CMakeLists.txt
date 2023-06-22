@@ -3,5 +3,6 @@ target_sources(clox PRIVATE
   debug.c
   memory.c
   value.c
+  vm.c
 )
 
