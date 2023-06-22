@@ -9,15 +9,15 @@
 
 VM vm;
 
-static void resetStack() {
+static void resetStack(void) {
     vm.stackTop = vm.stack;
 }
 
-void initVM() {
+void initVM(void) {
     resetStack();
 }
 
-void freeVM() {}
+void freeVM(void) {}
 
 void push(Value value) {
     // Check for a stack overflow
@@ -26,12 +26,12 @@ void push(Value value) {
     ++vm.stackTop;
 }
 
-Value pop() {
+Value pop(void) {
     --vm.stackTop;
     return *vm.stackTop;
 }
 
-static Value READ_CONSTANT_LONG() {
+static Value READ_CONSTANT_LONG(void) {
 #define READ_BYTE() (*vm.ip++)
     int b0 = READ_BYTE();
     int b1 = READ_BYTE();
@@ -41,7 +41,7 @@ static Value READ_CONSTANT_LONG() {
 #undef READ_BYTE
 }
 
-static InterpretResult run() {
+static InterpretResult run(void) {
 #define READ_BYTE() (*vm.ip++)
 #define READ_CONSTANT() (vm.chunk->constants.values[READ_BYTE()])
 #define BINARY_OP(op)                                                          \

@@ -6,4 +6,8 @@ SET(CMAKE_EXPORT_COMPILE_COMMANDS true)
 
 add_executable(clox src/main.c)
 target_include_directories(clox PUBLIC include)
+target_compile_options(clox PUBLIC
+  -Wall -Wextra -pedantic)
+set_target_properties(clox PROPERTIES C_STANDARD 17)
+
 add_subdirectory(src)
