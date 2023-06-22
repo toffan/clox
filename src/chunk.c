@@ -5,17 +5,47 @@
 #include "memory.h"
 #include "value.h"
 
+static void initLinesInfo(LinesInfo* linesinfo) {
+    linesinfo->count = 0;
+    linesinfo->capacity = 0;
+    linesinfo->lines = NULL;
+}
+
+static void freeLinesInfo(LinesInfo* linesinfo) {
+    FREE_ARRAY(Line, linesinfo->lines, linesinfo->capacity);
+    initLinesInfo(linesinfo);
+}
+
+static void addLine(LinesInfo* linesinfo, int line_number) {
+    if (linesinfo->count > 0 &&
+        linesinfo->lines[linesinfo->count - 1].number == line_number) {
+        linesinfo->lines[linesinfo->count - 1].length++;
+
+    } else {
+        if (linesinfo->capacity < linesinfo->count + 1) {
+            int oldCapacity = linesinfo->capacity;
+            linesinfo->capacity = GROW_CAPACITY(oldCapacity);
+            linesinfo->lines = GROW_ARRAY(
+                Line, linesinfo->lines, oldCapacity, linesinfo->capacity
+            );
+        }
+        linesinfo->lines[linesinfo->count].length = 1;
+        linesinfo->lines[linesinfo->count].number = line_number;
+        linesinfo->count++;
+    }
+}
+
 void initChunk(Chunk* chunk) {
     chunk->count = 0;
     chunk->capacity = 0;
     chunk->code = NULL;
-    chunk->lines = NULL;
+    initLinesInfo(&chunk->lines);
     initValueArray(&chunk->constants);
 }
 
 void freeChunk(Chunk* chunk) {
     FREE_ARRAY(uint8_t, chunk->code, chunk->capacity);
-    FREE_ARRAY(int, chunk->lines, chunk->capacity);
+    freeLinesInfo(&chunk->lines);
     freeValueArray(&chunk->constants);
     initChunk(chunk);
 }
@@ -26,15 +56,39 @@ void writeChunk(Chunk* chunk, uint8_t byte, int line) {
         chunk->capacity = GROW_CAPACITY(oldCapacity);
         chunk->code =
             GROW_ARRAY(uint8_t, chunk->code, oldCapacity, chunk->capacity);
-        chunk->lines =
-            GROW_ARRAY(int, chunk->lines, oldCapacity, chunk->capacity);
     }
     chunk->code[chunk->count] = byte;
-    chunk->lines[chunk->count] = line;
+    addLine(&chunk->lines, line);
     chunk->count++;
+}
+
+void writeConstant(Chunk* chunk, Value value, int line) {
+    int constant = addConstant(chunk, value);
+    if (constant > 255) {
+        // Constant does not fit on 1 byte, write it on 3 bytes
+        writeChunk(chunk, OP_CONSTANT_LONG, line);
+        writeChunk(chunk, constant, line);
+        writeChunk(chunk, constant >> 8, line);
+        writeChunk(chunk, constant >> 16, line);
+    } else {
+        writeChunk(chunk, OP_CONSTANT, line);
+        writeChunk(chunk, constant, line);
+    }
 }
 
 int addConstant(Chunk* chunk, Value value) {
     writeValueArray(&chunk->constants, value);
     return chunk->constants.count - 1;
+}
+
+int getLine(Chunk* chunk, int offset) {
+    LinesInfo* linesinfo = &chunk->lines;
+    int i = 0;
+    while (1) {
+        if (linesinfo->lines[i].length >= offset) {
+            return linesinfo->lines[i].number;
+        } else {
+            offset -= linesinfo->lines[i].length;
+        }
+    }
 }
