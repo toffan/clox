@@ -3,6 +3,7 @@ target_sources(clox PRIVATE
   compiler.c
   debug.c
   memory.c
+  object.c
   scanner.c
   value.c
   vm.c
