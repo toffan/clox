@@ -197,7 +197,7 @@ static void number(void) {
 
 static void string(void) {
     emitConstant(OBJ_VAL(
-        (Obj*)copyString(parser.previous.start + 1, parser.previous.length - 2)
+        (Obj*)referString(parser.previous.start + 1, parser.previous.length - 2)
     ));
 }
 
