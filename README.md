@@ -7,6 +7,5 @@ https://craftinginterpreters.com
 ## Installation
 
 ```console
-$ cmake -B build
-$ cmake --build build
+$ cmake --workflow --preset default
 ```
