@@ -110,9 +110,17 @@ static void emitReturn(void) {
     emitByte(OP_RETURN);
 }
 
+static uint8_t makeConstant(Value value) {
+    int constant = addConstant(currentChunk(), value);
+    if (constant > UINT8_MAX) {
+        error("Too many constants in one chunk.");
+        return 0;
+    }
+    return (uint8_t)constant;
+}
+
 static void emitConstant(Value value) {
-    // Diverge
-    writeConstant(currentChunk(), value, parser.previous.line);
+    emitBytes(OP_CONSTANT, makeConstant(value));
 }
 
 static void endCompiler(void) {

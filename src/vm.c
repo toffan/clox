@@ -77,16 +77,6 @@ static void concatenate(void) {
     push(OBJ_VAL((Obj*)result));
 }
 
-static Value READ_CONSTANT_LONG(void) {
-#define READ_BYTE() (*vm.ip++)
-    int b0 = READ_BYTE();
-    int b1 = READ_BYTE();
-    int b2 = READ_BYTE();
-    return vm.chunk->constants.values[(b2 << 16) + (b1 << 8) + b0];
-
-#undef READ_BYTE
-}
-
 static InterpretResult run(void) {
 #define READ_BYTE() (*vm.ip++)
 #define READ_CONSTANT() (vm.chunk->constants.values[READ_BYTE()])
@@ -116,11 +106,6 @@ static InterpretResult run(void) {
         switch (instruction = READ_BYTE()) {
         case OP_CONSTANT: {
             Value constant = READ_CONSTANT();
-            push(constant);
-            break;
-        }
-        case OP_CONSTANT_LONG: {
-            Value constant = READ_CONSTANT_LONG();
             push(constant);
             break;
         }
