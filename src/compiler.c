@@ -45,6 +45,7 @@ typedef struct {
 typedef struct {
     Token name;
     int depth;
+    bool is_const;
 } Local;
 
 typedef struct {
@@ -209,7 +210,7 @@ static int resolveLocal(Compiler* compiler, Token* name) {
     return -1;
 }
 
-static void addLocal(Token name) {
+static void addLocal(Token name, bool is_const) {
     if (current->localCount == UINT8_COUNT) {
         error("Too many local variables in function.");
     }
@@ -217,9 +218,10 @@ static void addLocal(Token name) {
     Local* local = &current->locals[current->localCount++];
     local->name = name;
     local->depth = -1;
+    local->is_const = is_const;
 }
 
-static void declareVariable(void) {
+static void declareVariable(bool is_const) {
     if (current->scopeDepth == 0) {
         return;
     }
@@ -235,13 +237,13 @@ static void declareVariable(void) {
             error("Already a variable with this name in this scope.");
         }
     }
-    addLocal(*name);
+    addLocal(*name, is_const);
 }
 
-static uint8_t parseVariable(const char* errorMessage) {
+static uint8_t parseVariable(bool is_const, const char* errorMessage) {
     consume(TOKEN_IDENTIFIER, errorMessage);
 
-    declareVariable();
+    declareVariable(is_const);
     if (current->scopeDepth > 0) {
         return 0;
     }
@@ -348,6 +350,10 @@ static void namedVariable(Token name, bool canAssign) {
     }
 
     if (canAssign && match(TOKEN_EQUAL)) {
+        if (getOp == OP_GET_LOCAL && current->locals[arg].is_const) {
+            error("Const variables cannot be reassigned.");
+            return;
+        }
         expression();
         emitBytes(setOp, (uint8_t)arg);
     } else {
@@ -404,6 +410,7 @@ ParseRule rules[] = {
   [TOKEN_NUMBER]        = {number,   NULL,   PREC_NONE},
   [TOKEN_AND]           = {NULL,     NULL,   PREC_NONE},
   [TOKEN_CLASS]         = {NULL,     NULL,   PREC_NONE},
+  [TOKEN_CONST]         = {NULL,     NULL,   PREC_NONE},
   [TOKEN_ELSE]          = {NULL,     NULL,   PREC_NONE},
   [TOKEN_FALSE]         = {literal,  NULL,   PREC_NONE},
   [TOKEN_FOR]           = {NULL,     NULL,   PREC_NONE},
@@ -461,13 +468,15 @@ static void block(void) {
     consume(TOKEN_RIGHT_BRACE, "Expect '}' after block.");
 }
 
-static void varDeclaration(void) {
-    uint8_t global = parseVariable("Expect variable name.");
+static void varDeclaration(bool is_const) {
+    uint8_t global = parseVariable(is_const, "Expect variable name.");
 
     if (match(TOKEN_EQUAL)) {
         expression();
-    } else {
+    } else if (!is_const) {
         emitByte(OP_NIL);
+    } else {
+        error("Const variables must be assigned at declaration.");
     }
 
     consume(TOKEN_SEMICOLON, "Expect ';' after variable declaration.");
@@ -515,7 +524,13 @@ static void synchronize(void) {
 
 static void declaration(void) {
     if (match(TOKEN_VAR)) {
-        varDeclaration();
+        varDeclaration(false);
+    } else if (match(TOKEN_CONST)) {
+        if (current->scopeDepth == 0) {
+            error("Cannot create const global.");
+        } else {
+            varDeclaration(true);
+        }
     } else {
         statement();
     }
