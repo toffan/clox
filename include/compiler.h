@@ -4,6 +4,6 @@
 #include "object.h"
 #include "vm.h"
 
-bool compile(const char* source, Chunk* chunk);
+ObjFunction* compile(const char* source);
 
 #endif  // HG_06fc2a35_e2f6_4481_a312_c299d866dcbb
