@@ -256,7 +256,7 @@ static ParseRule* getRule(TokenType type);
 static void parsePrecedence(Precedence precedence);
 
 static uint8_t identifierConstant(Token* name) {
-    return makeConstant(OBJ_VAL((Obj*)copyString(name->start, name->length)));
+    return makeConstant(OBJ_VAL(copyString(name->start, name->length)));
 }
 
 static bool identifiersEqual(Token* a, Token* b) {
@@ -484,7 +484,7 @@ static void number(__attribute__((unused)) bool canAssign) {
 
 static void string(__attribute__((unused)) bool canAssign) {
     emitConstant(OBJ_VAL(
-        (Obj*)copyString(parser.previous.start + 1, parser.previous.length - 2)
+        copyString(parser.previous.start + 1, parser.previous.length - 2)
     ));
 }
 
@@ -640,7 +640,7 @@ static void function(FunctionType type) {
 
     block();
     ObjFunction* function = endCompiler();
-    emitBytes(OP_CLOSURE, makeConstant(OBJ_VAL((Obj*)function)));
+    emitBytes(OP_CLOSURE, makeConstant(OBJ_VAL(function)));
 
     for (int i = 0; i < function->upvalueCount; ++i) {
         emitByte(compiler.upvalues[i].isLocal ? 1 : 0);

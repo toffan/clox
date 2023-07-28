@@ -53,8 +53,8 @@ static void runtimeError(const char* format, ...) {
 }
 
 static void defineNative(const char* name, NativeFn function) {
-    push(OBJ_VAL((Obj*)copyString(name, (int)strlen(name))));
-    push(OBJ_VAL((Obj*)newNative(function)));
+    push(OBJ_VAL(copyString(name, (int)strlen(name))));
+    push(OBJ_VAL(newNative(function)));
     tableSet(&vm.globals, AS_STRING(vm.stack[0]), vm.stack[1]);
     pop();
     pop();
@@ -188,7 +188,7 @@ static void concatenate(void) {
     ObjString* result = takeString(chars, length);
     pop();
     pop();
-    push(OBJ_VAL((Obj*)result));
+    push(OBJ_VAL(result));
 }
 
 static InterpretResult run(void) {
@@ -367,7 +367,7 @@ static InterpretResult run(void) {
         case OP_CLOSURE: {
             ObjFunction* function = AS_FUNCTION(READ_CONSTANT());
             ObjClosure* closure = newClosure(function);
-            push(OBJ_VAL((Obj*)closure));
+            push(OBJ_VAL(closure));
             for (int i = 0; i < closure->upvalueCount; ++i) {
                 uint8_t isLocal = READ_BYTE();
                 uint8_t index = READ_BYTE();
@@ -413,10 +413,10 @@ InterpretResult interpret(const char* source) {
         return INTERPRET_COMPILE_ERROR;
     }
 
-    push(OBJ_VAL((Obj*)function));
+    push(OBJ_VAL(function));
     ObjClosure* closure = newClosure(function);
     pop();
-    push(OBJ_VAL((Obj*)closure));
+    push(OBJ_VAL(closure));
     call(closure, 0);
 
     return run();
