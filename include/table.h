@@ -25,5 +25,7 @@ void tableAddAll(Table* from, Table* to);
 ObjString* tableFindString(
     Table* table, const char* chars, int length, uint32_t hash
 );
+void tableRemoveWhite(Table* table);
+void markTable(Table* table);
 
 #endif // HG_7bb1201c_d4bd_47e9_a661_6018dc876702
