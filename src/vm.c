@@ -36,7 +36,7 @@ static void runtimeError(const char* format, ...) {
     va_end(args);
     fputs("\n", stderr);
 
-    for (int i = vm.frameCount; i >= 0; --i) {
+    for (int i = vm.frameCount - 1; i >= 0; --i) {
         CallFrame* frame = &vm.frames[i];
         ObjFunction* function = frame->closure->function;
         size_t instruction = frame->ip - function->chunk.code;
